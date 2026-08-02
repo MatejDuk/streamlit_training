@@ -3,11 +3,11 @@ credentials:
     marketing:
       email: marketing@mail.com
       name: Marketing Team
-      password: marketing
+      password: $2b$12$oi05hPag1mpUQ3K8Qhl4n.ExGoRZDZ6lls66hDAKtZi6pNYTE5QIG
     datascience:
       email: datascience@mail.com
       name: Data Science Team
-      password: datascience
+      password: $2b$12$GU6PAxSmZeKfJxqZiR/8RuaOrlOxe1naZMIj08Sp6D2SEBFtZWmwG
 cookie:
   expiry_days: 30
   key: cookie_signature

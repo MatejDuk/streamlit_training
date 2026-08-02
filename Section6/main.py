@@ -8,27 +8,32 @@ import numpy as np
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans, AgglomerativeClustering
 
+# hashed_passwords = stauth.Hasher().hash_list(["marketing", "datascience"])
+# st.write(hashed_passwords)
 
 # Read config file
-with open('config.yaml') as file:
+with open('Section6/config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
-# Pre-hashing all plain text passwords once
-# stauth.Hasher.hash_passwords(config['credentials'])
-
-
 # Initialize the authenticator
-
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
 # Function to read the data
 
 
 @st.cache_data
 def read_data():
-    df = pd.read_csv('data/segmentation data.csv')
+    df = pd.read_csv('Section6/data/segmentation data.csv')
     return df
 
 # Read data
 # Assign the features to the variable "X"
+df = read_data()
+X = df
 
 # Function to calculate the silhouette for each algo, for each number of cluster
 # Returns a Dataframe with 3 columns [n_clusters, algo1, algo2]
@@ -36,7 +41,20 @@ def read_data():
 
 @st.cache_data(show_spinner="Running experiment")
 def run_experiment(X):
-    pass
+    results = []
+    for i in range(2,11):
+        kmeans = KMeans(n_clusters=i)
+        kmeans.fit(X)
+        kmeans_silhouette = silhouette_score(X, kmeans.labels_)
+
+        agglomerative = AgglomerativeClustering(n_clusters=i)
+        agglomerative.fit(X)
+        agglomerative_silhouette = silhouette_score(X, agglomerative.labels_)
+
+        results.append([i, round(kmeans_silhouette,2), round(agglomerative_silhouette,2)])
+    
+    return pd.DataFrame(results, columns=['n_clusters', 'kmeans', 'agglomerative'])
+
 
 
 @st.cache_data
@@ -115,14 +133,18 @@ def display_group_metrics(df, num_clusters):
 
 def display_ds_content():
     # Write the dataframe
+    st.dataframe(df)
     # Button to run the function run_experiment
+    exp_btn = st.button("Run experiment")
 
     if exp_btn:
         # Run the experiment
+        results = run_experiment(X)
 
         st.write("Silhouette scores")
 
         # Write the df of the results
+        st.dataframe(results)
 
 
 def display_marketing_content():
@@ -145,4 +167,23 @@ def display_marketing_content():
         display_group_metrics(c_df, num_clusters)
 
 # Logic to authenticate user
+# Render the login widget
+authenticator.login(location="sidebar")
+if st.session_state.get('authentication_status'):
+    authenticator.logout(location="sidebar")
+    name = st.session_state.get("username")
+    if name == "datascience":
+        st.write(f"Welcome *Data Science Team*")
+        st.title("Data Science content")
+        display_ds_content()
+    elif name == "marketing":
+        st.write(f"Welcome *Marketing Team*")
+        st.title("Marketing content")
+        display_marketing_content()
+elif st.session_state.get('authentication_status') is False:
+    st.error('Username/password is incorrect')
+elif st.session_state.get('authentication_status') is None:
+    st.warning('Please enter your username and password')
+
+# Authenticate users
 # Put login in sidebar
